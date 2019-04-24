@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:weightSum="8"
+    tools:context="com.example.cheukleong.minibus_project.MainActivity">
+
+    <EditText
+        android:id="@+id/Car_ID"
+        android:layout_width="162dp"
+        android:layout_height="100dp"
+        android:layout_alignEnd="@+id/route_change"
+        android:layout_alignParentTop="true"
+        android:background="@null"
+        android:cursorVisible="false"
+        android:ems="10"
+        android:hint="車牌號碼"
+        android:inputType="textPersonName"
+        android:selectAllOnFocus="false"
+        android:textAlignment="center"
+        android:textAppearance="@style/TextAppearance.AppCompat"
+        android:textColor="@android:color/background_dark"
+        android:textColorHint="@android:color/background_dark"
+        android:textStyle="bold"
+        tools:layout_editor_absoluteX="120dp"
+        tools:layout_editor_absoluteY="0dp" />
+
+    <TextView
+        android:id="@+id/textView2"
+        android:layout_width="wrap_content"
+        android:layout_height="100dp"
+        android:layout_alignParentTop="true"
+        android:layout_marginEnd="3dp"
+        android:layout_toStartOf="@+id/Car_ID"
+        android:gravity="center"
+        android:text="車牌："
+        android:textAlignment="textEnd"
+        android:textAllCaps="false"
+        android:textColor="@android:color/background_dark"
+        android:textSize="36sp"
+        android:textStyle="bold" />
+
+    <TextView
+        android:id="@+id/show_carid"
+        android:layout_width="match_parent"
+        android:layout_height="200dp"
+        android:layout_below="@+id/Car_ID"
+        android:layout_centerHorizontal="true"
+        android:gravity="center"
+        android:text="0"
+        android:textColor="#095300"
+        android:textSize="120dp"
+        tools:layout_editor_absoluteX="117dp"
+        tools:layout_editor_absoluteY="100dp" />
+
+    <Spinner
+        android:id="@+id/route_spinner"
+        android:layout_width="200dp"
+        android:layout_height="87dp"
+        android:layout_below="@+id/show_carid"
+        android:layout_centerHorizontal="true"
+        android:background="@drawable/spinner"
+        android:paddingBottom="50px" />
+
+    <ImageButton
+        android:id="@+id/route_change"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/textView3"
+        android:layout_centerHorizontal="true"
+        android:background="@null"
+        android:src="@drawable/button_unclicked" />
+
+    <TextView
+        android:id="@+id/textView3"
+        android:layout_width="wrap_content"
+        android:layout_height="50px"
+        android:layout_alignStart="@+id/show_carid"
+        android:layout_below="@+id/route_spinner" />
+
+
+    <Button
+        android:id="@+id/startButton"
+        android:layout_width="wrap_content"
+        android:layout_height="33dp"
+        android:layout_alignParentEnd="true"
+        android:layout_below="@+id/Car_ID"
+        android:padding="5dp"
+        android:text="開始"
+        android:visibility="invisible"
+        tools:layout_editor_absoluteX="52dp"
+        tools:layout_editor_absoluteY="368dp" />
+
+    <TextView
+        android:id="@+id/battery_level"
+        android:layout_width="wrap_content"
+        android:layout_height="49dp"
+        android:layout_alignParentStart="true"
+        android:layout_alignParentTop="true"
+        android:text="0%" />
+
+
+</RelativeLayout>
