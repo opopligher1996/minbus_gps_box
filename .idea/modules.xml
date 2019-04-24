@@ -3,7 +3,7 @@
   <component name="ProjectModuleManager">
     <modules>
       <module fileurl="file://$PROJECT_DIR$/app/app.iml" filepath="$PROJECT_DIR$/app/app.iml" />
-      <module fileurl="file://$PROJECT_DIR$/minbus_backup.iml" filepath="$PROJECT_DIR$/minbus_backup.iml" />
+      <module fileurl="file://$PROJECT_DIR$/minbus_gps_box.iml" filepath="$PROJECT_DIR$/minbus_gps_box.iml" />
     </modules>
   </component>
 </project>

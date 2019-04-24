@@ -76,7 +76,7 @@ public class MainActivity extends Activity {
         route_change = findViewById(R.id.route_change);
         show_battery_level = findViewById(R.id.battery_level);
 //        Car_ID.setText(Build.ID);
-        Car_ID.setText("8722");
+        Car_ID.setText("gps_box");
         route_ids.add("線路");
         route_ids.add("8x");
         route_ids.add("8");
