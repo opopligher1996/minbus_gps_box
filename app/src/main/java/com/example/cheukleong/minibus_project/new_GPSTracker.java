@@ -121,6 +121,10 @@ public class new_GPSTracker extends Service
             {22.3343050891782,114.210504183526}
     };
 
+    public static Station go_stations_with_name [];
+
+    public static Station back_stations_with_name [];
+
     private class LocationListener implements android.location.LocationListener
     {
         Location mLastLocation;
@@ -265,7 +269,7 @@ public class new_GPSTracker extends Service
                         new_GPSTracker.Current_time = Current_time;
                         Log.e("New Thread Start","before running time:"+new_GPSTracker.Current_time);
                         new_GPSTracker.update_location();
-                        Configs.getConfigs();
+                        //Configs.getConfigs();
                         Log.e("New Thread End", "after running");
                     }
                     catch (InterruptedException e)
@@ -365,6 +369,28 @@ public class new_GPSTracker extends Service
         }
     }
 
+
+    public void Check_Staion_Name(){
+        Station check_stations[];
+        if(routeid.equals("1"))
+            check_stations = go_stations_with_name;
+        else
+            check_stations = back_stations_with_name;
+
+        for(int i = 0; i<check_stations.length; i++)
+        {
+            Station station = check_stations[i];
+            String station_name = station.staton_name;
+            double current_lat = Current_location.getLatitude();
+            double current_lng = Current_location.getLongitude();
+            double distance = station.getDistance(current_lat,current_lng);
+            if(distance < 200)
+            {
+                MainActivity.station_name.setText(station_name);
+            }
+        }
+
+    }
 
     private BroadcastReceiver mBatInfoReceiver = new BroadcastReceiver() {
         @Override

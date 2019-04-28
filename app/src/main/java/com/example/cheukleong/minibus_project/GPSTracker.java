@@ -87,6 +87,10 @@ public class GPSTracker extends Service
             {22.2837,114.1588}
     };
 
+    Station go_stations_with_name[];
+
+    Station back_stations_with_name[];
+
     private class LocationListener implements android.location.LocationListener
     {
         Location mLastLocation;

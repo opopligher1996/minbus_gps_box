@@ -7,20 +7,34 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.pm.PackageManager;
+import android.graphics.Bitmap;
 import android.graphics.Color;
+import android.graphics.PixelFormat;
+import android.hardware.Camera;
+import android.hardware.camera2.CameraCharacteristics;
+import android.hardware.camera2.CameraDevice;
+import android.hardware.camera2.CameraMetadata;
+import android.hardware.camera2.CaptureRequest;
+import android.media.Image;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Environment;
 import android.os.StrictMode;
+import android.provider.MediaStore;
 import android.util.Log;
 import android.view.Gravity;
 import android.view.MotionEvent;
+import android.view.TextureView;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
 import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.EditText;
+import android.widget.FrameLayout;
 import android.widget.ImageButton;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.Spinner;
 import android.widget.TextView;
@@ -41,27 +55,78 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 
+import me.aflak.ezcam.EZCam;
+import me.aflak.ezcam.EZCamCallback;
+
+import static android.provider.MediaStore.Files.FileColumns.MEDIA_TYPE_IMAGE;
+import static android.provider.MediaStore.Files.FileColumns.MEDIA_TYPE_VIDEO;
+import static com.example.cheukleong.minibus_project.Configs.TAG;
+
 
 public class MainActivity extends Activity {
+    final static int CAMERA_RESULT = 0;
+    public ImageView img;
+    String imageFilePath;
+
+    private EZCam cam;
+    public TextureView textureView;
     private Button start;
+    private Button button_capture;
     public static TextView show_CarId;
     private EditText Car_ID;
     private Spinner route_spinner;
     private ImageButton route_change;
     private TextView show_battery_level;
+    public static  TextView station_name;
     private List<String> route_ids = new ArrayList<String>();
     public static String choose_route = "11";
     public final Context context=this;
     public static int battery_level;
+    public static Camera mCamera;
+    private CameraPreview mPreview;
+    private Camera.PictureCallback mPicture = new Camera.PictureCallback() {
+
+        @Override
+        public void onPictureTaken(byte[] data, Camera camera) {
+
+            Log.e(TAG, "onPictureTaken: " );
+            File pictureFile = getOutputMediaFile(MEDIA_TYPE_IMAGE);
+            if (pictureFile == null){
+                Log.d(TAG, "Error creating media file, check storage permissions");
+                return;
+            }
+            else{
+                Log.d(TAG, "create FILE");
+                Log.d(TAG, data.toString());
+            }
+
+            try {
+                FileOutputStream fos = new FileOutputStream(pictureFile);
+                fos.write(data);
+                fos.close();
+            } catch (FileNotFoundException e) {
+                Log.d(TAG, "File not found: " + e.getMessage());
+            } catch (IOException e) {
+                Log.d(TAG, "Error accessing file: " + e.getMessage());
+            }
+
+            restartCamera();
+        }
+    };
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -70,11 +135,13 @@ public class MainActivity extends Activity {
         Car_ID=findViewById(R.id.Car_ID);
         start=findViewById(R.id.startButton);
         route_spinner=findViewById(R.id.route_spinner);
-
+        button_capture = findViewById(R.id.button_capture);
         show_CarId = findViewById(R.id.show_carid);
         route_spinner = findViewById(R.id.route_spinner);
         route_change = findViewById(R.id.route_change);
         show_battery_level = findViewById(R.id.battery_level);
+        textureView = findViewById(R.id.textureView);
+        station_name = findViewById(R.id.station_name);
 //        Car_ID.setText(Build.ID);
         Car_ID.setText("gps_box");
         route_ids.add("線路");
@@ -84,9 +151,13 @@ public class MainActivity extends Activity {
         route_ids.add("11M");
         route_ids.add("11");
         route_ids.add("油站");
-        MySpinnerAdapter adapter = new MySpinnerAdapter();
-        route_spinner.setAdapter(adapter);
         show_CarId.setText(choose_route);
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) { // API 21
+            Car_ID.setShowSoftInputOnFocus(false);
+        } else { // API 11-20
+            Car_ID.setTextIsSelectable(true);
+        }
 
         start.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -98,54 +169,35 @@ public class MainActivity extends Activity {
             }
         });
 
-        route_change.setOnTouchListener(new View.OnTouchListener() {
-            @Override
-            public boolean onTouch(View v, MotionEvent event)
-            {
-                if(event.getAction() == MotionEvent.ACTION_DOWN) {
-                    route_change.setImageResource(R.drawable.button_clicked);
-                } else if (event.getAction() == MotionEvent.ACTION_UP) {
+        button_capture.setOnClickListener(
+                new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        // get an image from the camera
+                        try{
+                            cam.takePicture();
+                        }catch (Exception e){
 
-                    route_change.setImageResource(R.drawable.button_unclicked);
-                    int item = route_spinner.getSelectedItemPosition();
-                    if(item!=0) {
-                        final String select_route = route_ids.get(item);
-                        AlertDialog.Builder builder = new AlertDialog.Builder(context);
-                        builder.setTitle("確定轉線")
-                                .setMessage("由"+choose_route+"轉為"+select_route)
-                                .setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
-                                    public void onClick(DialogInterface dialog, int which) {
-                                        // continue with delete
-                                        if(!choose_route.equals(select_route))
-                                        {
-
-                                            choose_route = select_route;
-                                            show_CarId.setText(select_route);
-                                            Toast.makeText(context, "已轉" + select_route + "路線", Toast.LENGTH_SHORT).show();
-                                            change_route(choose_route);
-                                        }
-                                        else
-                                        {
-                                            Toast.makeText(context, "維持" + select_route + "路線", Toast.LENGTH_SHORT).show();
-                                        }
-                                    }
-                                })
-                                .setNegativeButton(android.R.string.no, new DialogInterface.OnClickListener() {
-                                    public void onClick(DialogInterface dialog, int which) {
-                                        Toast.makeText(context, "取消路線", Toast.LENGTH_SHORT).show();
-                                    }
-                                });
-
-                        builder.show();
-                    }
-                    else
-                    {
-                        Toast.makeText(context, "你沒有選擇路線", Toast.LENGTH_SHORT).show();
+                        }
                     }
                 }
-                return true;
-            }
-        });
+        );
+
+        new_GPSTracker.go_stations_with_name = get_go_stations(choose_route);
+
+        new_GPSTracker.back_stations_with_name =get_back_stations(choose_route);
+
+//        checkCameraHardware(this);
+//
+//
+//        Intent i = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+//        startActivityForResult(i,CAMERA_RESULT);
+//        mCamera = getCameraInstance();
+//        mPreview = new CameraPreview(this, mCamera);
+//        FrameLayout preview = (FrameLayout) findViewById(R.id.camera_preview);
+//        preview.addView(mPreview);
+
+
 
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.ICE_CREAM_SANDWICH_MR1) {
@@ -182,23 +234,15 @@ public class MainActivity extends Activity {
         }
     };
 
-    public void change_route(String choose_route){
-        new_GPSTracker.CAR_ID=Car_ID.getText().toString();
-        new_GPSTracker.init=false;
-        new_GPSTracker.journeyid=null;
-        new_GPSTracker.Arr_station = -1;
-        new_GPSTracker.Pre_station = -2;
-        if(choose_route.equals("11M")){
-            new_GPSTracker.go_station = new_GPSTracker.test_11m_go_station;
-            new_GPSTracker.back_station = new_GPSTracker.test_11m_back_station;
-        }
-        else if(choose_route.equals("11")){
-            new_GPSTracker.go_station = new_GPSTracker.test_11_go_station;
-            new_GPSTracker.back_station = new_GPSTracker.test_11_back_station;
-        }
-        else{
-            new_GPSTracker.go_station = new_GPSTracker.test_8x_go_station;
-            new_GPSTracker.back_station = new_GPSTracker.test_8x_back_station;
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        Log.e(TAG, "onActivityResult: " );
+        if(resultCode == RESULT_OK){
+            Bundle extras = data.getExtras();
+            Bitmap bitmap = (Bitmap) extras.get("data");
+            img = (ImageView) findViewById(R.id.image);
+            img.setImageBitmap(bitmap);
         }
     }
 
@@ -247,64 +291,168 @@ public class MainActivity extends Activity {
         return null;
     };
 
-
-
-    class MySpinnerAdapter extends BaseAdapter {
-        @Override
-        public int getCount() {
-            return route_ids.size();
+    private void checkCameraHardware(Context context) {
+        if (context.getPackageManager().hasSystemFeature(PackageManager.FEATURE_CAMERA)){
+            // this device has a camera
+            Log.e(TAG, "checkCameraHardware: true");
+        } else {
+            // no camera on this device
+            Log.e(TAG, "checkCameraHardware: false");
         }
+    }
 
-        @Override
-        public Object getItem(int position) {
-            return route_ids.get(position);
+    public static Camera getCameraInstance(){
+        Camera c = null;
+        try {
+            c = Camera.open(0); // attempt to get a Camera instance
         }
-
-        @Override
-        public long getItemId(int position) {
-            return position;
+        catch (Exception e){
+            e.printStackTrace();
+            Log.e(TAG, "getCameraInstance: ");
+            // Camera is not available (in use or does not exist)
         }
+        return c; // returns null if camera is unavailable
+    }
 
-        @Override
-        public View getView(int position, View convertView, ViewGroup parent) {
-            if(position==0)
-            {
-                LinearLayout ll = new LinearLayout(MainActivity.this);
-                ll.setGravity(Gravity.CENTER);
-                TextView tv = new TextView(MainActivity.this);
-                tv.setText(route_ids.get(position));
-                tv.setTextSize(40);
-                tv.setTextColor(Color.GRAY);
-                tv.setGravity(Gravity.CENTER);
-                ll.addView(tv);
-                return ll;
-            }
-            else
-            {
-                LinearLayout ll = new LinearLayout(MainActivity.this);
-                ll.setGravity(Gravity.CENTER);
-                TextView tv = new TextView(MainActivity.this);
-                tv.setText(route_ids.get(position));
-                tv.setTextSize(40);
-                tv.setTextColor(Color.rgb(9, 83, 0));
-                tv.setGravity(Gravity.CENTER);
-                ll.addView(tv);
-                return ll;
+    private static File getOutputMediaFile(int type){
+        // To be safe, you should check that the SDCard is mounted
+        // using Environment.getExternalStorageState() before doing this.
+
+        File mediaStorageDir = new File(Environment.getExternalStoragePublicDirectory(
+                Environment.DIRECTORY_PICTURES), "MyCameraApp");
+        // This location works best if you want the created images to be shared
+        // between applications and persist after your app has been uninstalled.
+
+        Log.e(TAG, "getOutputMediaFile: "+mediaStorageDir );
+        // Create the storage directory if it does not exist
+        if (! mediaStorageDir.exists()){
+            if (! mediaStorageDir.mkdirs()){
+                Log.d("MyCameraApp", "failed to create directory");
+                return null;
             }
         }
 
-        @Override
-        public boolean isEnabled(int position){
-            if(position == 0)
-            {
-                // Disable the first item from Spinner
-                // First item will be use for hint
-                return false;
-            }
-            else
-            {
-                return true;
-            }
+        // Create a media file name
+        String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
+        File mediaFile;
+        if (type == MEDIA_TYPE_IMAGE){
+            mediaFile = new File(mediaStorageDir.getPath() + File.separator +
+                    "IMG_"+ timeStamp + ".jpg");
+        } else if(type == MEDIA_TYPE_VIDEO) {
+            mediaFile = new File(mediaStorageDir.getPath() + File.separator +
+                    "VID_"+ timeStamp + ".mp4");
+        } else {
+            return null;
         }
+
+        return mediaFile;
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        releaseCamera();              // release the camera immediately on pause event
+    }
+
+    private void releaseCamera(){
+        if (mCamera != null){
+            mCamera.release();
+            mCamera = null;
+        }
+    }
+
+    private void restartCamera(){
+        mCamera = getCameraInstance();
+        mPreview = new CameraPreview(this, mCamera);
+        FrameLayout preview = (FrameLayout) findViewById(R.id.camera_preview);
+        preview.addView(mPreview);
+    }
+
+    public static Station[] get_go_stations(String route){
+        HttpResponse response = null;
+        try {
+            if (android.os.Build.VERSION.SDK_INT > 9)
+            {
+                StrictMode.ThreadPolicy policy = new
+                        StrictMode.ThreadPolicy.Builder().permitAll().build();
+                StrictMode.setThreadPolicy(policy);
+            }
+            HttpClient client = new DefaultHttpClient();
+            HttpGet request = new HttpGet();
+            request.setHeader("Content-Type", "application/json");
+            request.setURI(new URI("http://minibus-api-prod.socif.co/api/v2/data/getStations/?routeid="+route+"&seq=1"));
+            response = client.execute(request);
+            HttpEntity entity = response.getEntity();
+            String text_responese = EntityUtils.toString(entity);
+            JSONObject obj = new JSONObject(text_responese);
+            JSONArray array_stations = obj.getJSONArray("response");
+
+            Log.i(TAG, "get_all_station: "+array_stations);
+            Station go_stations[] = new Station[array_stations.length()];
+
+            for(int i =0; i<array_stations.length(); i++){
+                JSONObject station = (JSONObject) array_stations.get(i);
+                JSONObject station_location = station.getJSONObject("location");
+                String station_name = station.getString("name");
+                go_stations[i] = new Station(station_name, station_location.getDouble("lat"),station_location.getDouble("lng"));
+            }
+            return go_stations;
+
+        } catch (URISyntaxException e) {
+            e.printStackTrace();
+        } catch (ClientProtocolException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        } catch (IOException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+        return null;
+    };
+
+    public static Station[] get_back_stations(String route){
+        HttpResponse response = null;
+        try {
+            if (android.os.Build.VERSION.SDK_INT > 9)
+            {
+                StrictMode.ThreadPolicy policy = new
+                        StrictMode.ThreadPolicy.Builder().permitAll().build();
+                StrictMode.setThreadPolicy(policy);
+            }
+            HttpClient client = new DefaultHttpClient();
+            HttpGet request = new HttpGet();
+            request.setHeader("Content-Type", "application/json");
+            request.setURI(new URI("http://minibus-api-prod.socif.co/api/v2/data/getStations/?routeid="+route+"&seq=2"));
+            response = client.execute(request);
+            HttpEntity entity = response.getEntity();
+            String text_responese = EntityUtils.toString(entity);
+            JSONObject obj = new JSONObject(text_responese);
+            JSONArray array_stations = obj.getJSONArray("response");
+
+            Log.i(TAG, "get_all_station: "+array_stations);
+            Station back_stations[] = new Station[array_stations.length()];
+
+            for(int i =0; i<array_stations.length(); i++){
+                JSONObject station = (JSONObject) array_stations.get(i);
+                JSONObject station_location = station.getJSONObject("location");
+                String station_name = station.getString("name");
+                back_stations[i] = new Station(station_name, station_location.getDouble("lat"),station_location.getDouble("lng"));
+            }
+            return back_stations;
+
+        } catch (URISyntaxException e) {
+            e.printStackTrace();
+        } catch (ClientProtocolException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        } catch (IOException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+        return null;
     }
 }
