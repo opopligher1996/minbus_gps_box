@@ -2,6 +2,7 @@
 <android.support.constraint.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/main"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:weightSum="8"
@@ -136,13 +137,13 @@
 
 
     <Button
-        android:editable="false"
-        android:inputType="none"
         android:id="@+id/startButton"
         android:layout_width="wrap_content"
         android:layout_height="33dp"
         android:layout_alignParentEnd="true"
         android:layout_below="@+id/Car_ID"
+        android:editable="false"
+        android:inputType="none"
         android:padding="5dp"
         android:text="開始"
         android:visibility="invisible"
@@ -157,41 +158,16 @@
         android:layout_alignParentTop="true"
         android:text="0%" />
 
-    <FrameLayout
-        android:id="@+id/camera_preview"
-        android:layout_width="198dp"
-        android:layout_height="200dp"
-        android:layout_marginBottom="8dp"
-        android:layout_marginLeft="8dp"
-        android:layout_marginStart="8dp"
-        android:layout_weight="1"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintStart_toStartOf="parent" />
-
     <Button
         android:id="@+id/button_capture"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="center"
-        android:layout_marginBottom="50dp"
-        android:layout_marginLeft="8dp"
-        android:layout_marginStart="8dp"
+        android:layout_marginBottom="48dp"
+        android:layout_marginStart="300dp"
         android:text="Capture"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintStart_toEndOf="@+id/camera_preview" />
-
-    <FrameLayout
-        android:layout_width="200dp"
-        android:layout_height="200dp"
-        android:layout_marginBottom="8dp"
-        android:layout_marginStart="8dp"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintStart_toEndOf="@+id/button_capture">
-        <TextureView
-            android:id="@+id/textureView"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"/>
-    </FrameLayout>
+        app:layout_constraintStart_toStartOf="parent" />
 
     <TextView
         android:id="@+id/textView5"
@@ -202,6 +178,25 @@
         android:background="#095300"
         app:layout_constraintEnd_toStartOf="@+id/route_change"
         app:layout_constraintTop_toTopOf="parent" />
+
+    <ImageView
+        android:id="@+id/capscreen_image_view"
+        android:layout_width="204dp"
+        android:layout_height="200dp"
+        android:layout_marginBottom="16dp"
+        android:layout_marginStart="32dp"
+        android:src="@android:drawable/btn_star"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent" />
+
+    <FrameLayout
+        android:id="@+id/camera_preview"
+        android:layout_width="200dp"
+        android:layout_height="200dp"
+        android:layout_marginBottom="16dp"
+        android:layout_weight="1"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toEndOf="@+id/button_capture" />
 
 
 </android.support.constraint.ConstraintLayout>

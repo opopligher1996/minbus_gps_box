@@ -28,4 +28,3 @@ dependencies {
     androidTestImplementation 'com.android.support.test.espresso:espresso-core:3.0.1'
     implementation 'me.aflak.libraries:ezcam:2.3.3'
 }
-

@@ -154,6 +154,7 @@ public class new_GPSTracker extends Service
                 Check_Arrive_Station();
                 Check_Quit_Station();
                 Check_Finish_Journey();
+                Check_Staion_Name();
                 Set_Sent_location(location);
             }
             else if(init){
