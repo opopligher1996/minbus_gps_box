@@ -1,5 +1,6 @@
 package com.example.cheukleong.minibus_project;
 
+import android.content.Context;
 import android.os.StrictMode;
 import android.util.Log;
 
@@ -18,6 +19,7 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URI;
@@ -33,6 +35,7 @@ public class Configs {
 
     public static String TAG = "Debug:";
 
+
     public static void getConfigs(){
         HttpResponse response = null;
         Log.e(TAG, "getConfigs:" );
@@ -46,7 +49,8 @@ public class Configs {
             HttpClient client = new DefaultHttpClient();
             HttpGet request = new HttpGet();
             request.setHeader("Content-Type", "application/json");
-            request.setURI(new URI("http://minibus-api-prod.scif.co/api/v2/minibus/getCarConfigs/?license="+new_GPSTracker.CAR_ID));
+            request.setURI(new URI("http://minibus-staging.azurewebsites.net/api/v2/minibus/getCarConfigs/?license="+new_GPSTracker.CAR_ID));
+            //request.setURI(new URI("http://minibus.azurewebsites.net/api/v2/minibus/getCarConfigs/?license="+new_GPSTracker.CAR_ID));
             response = client.execute(request);
             HttpEntity entity = response.getEntity();
             String text_responese = EntityUtils.toString(entity);
@@ -90,5 +94,10 @@ public class Configs {
         } catch (JSONException e) {
             e.printStackTrace();
         }
+    }
+
+
+    public void read_tmp_file(){
+
     }
 }

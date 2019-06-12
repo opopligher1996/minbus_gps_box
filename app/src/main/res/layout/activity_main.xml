@@ -96,8 +96,7 @@
         android:layout_below="@+id/Car_ID"
         android:layout_centerHorizontal="true"
         android:layout_marginBottom="8dp"
-        android:layout_marginEnd="120dp"
-        android:layout_marginRight="120dp"
+        android:layout_marginEnd="100dp"
         android:gravity="center"
         android:text="0"
         android:textColor="#095300"
@@ -147,8 +146,8 @@
         android:padding="5dp"
         android:text="開始"
         android:visibility="invisible"
-        tools:layout_editor_absoluteX="0dp"
-        tools:layout_editor_absoluteY="466dp" />
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/capscreen_image_view" />
 
     <TextView
         android:id="@+id/battery_level"
@@ -166,6 +165,7 @@
         android:layout_marginBottom="48dp"
         android:layout_marginStart="300dp"
         android:text="Capture"
+        android:visibility="invisible"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent" />
 
@@ -186,17 +186,39 @@
         android:layout_marginBottom="16dp"
         android:layout_marginStart="32dp"
         android:src="@android:drawable/btn_star"
+        android:visibility="invisible"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent" />
 
-    <FrameLayout
-        android:id="@+id/camera_preview"
+    <TextureView
+        android:id="@+id/textureView"
         android:layout_width="200dp"
         android:layout_height="200dp"
         android:layout_marginBottom="16dp"
-        android:layout_weight="1"
+        android:layout_marginStart="12dp"
+        android:visibility="invisible"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toEndOf="@+id/button_capture" />
+
+    <ImageButton
+        android:id="@+id/sound_button"
+        android:layout_width="80dp"
+        android:layout_height="80dp"
+        android:layout_marginStart="8dp"
+        android:layout_marginTop="40dp"
+        android:src="@drawable/speaker"
+        android:background="@null"
+        app:layout_constraintStart_toEndOf="@+id/station_name"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <TextView
+        android:id="@+id/textView4"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:background="#000000"
+        android:text="TextView"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
 
 
 </android.support.constraint.ConstraintLayout>

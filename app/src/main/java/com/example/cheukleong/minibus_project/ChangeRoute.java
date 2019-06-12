@@ -3,6 +3,7 @@ package com.example.cheukleong.minibus_project;
 import android.content.Intent;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageButton;
@@ -26,12 +27,16 @@ public class ChangeRoute extends AppCompatActivity {
         button_11.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                MainActivity.show_CarId.setText("11");
+                Log.i("GASH: ", "button_11 onClick: ");
+//                MainActivity.show_CarId.setText("11");
                 MainActivity.choose_route = "11";
+                MainActivity.delete_tmp_file();
+                MainActivity.write_tmp_file("11");
+                MainActivity.handler.sendEmptyMessage(0);
                 new_GPSTracker.go_station = new_GPSTracker.test_11_go_station;
                 new_GPSTracker.back_station = new_GPSTracker.test_11_back_station;
-                new_GPSTracker.go_stations_with_name = MainActivity.get_go_stations("11");
-                new_GPSTracker.back_stations_with_name =MainActivity.get_back_stations("11");
+//                new_GPSTracker.go_stations_with_name = MainActivity.get_go_stations("11");
+//                new_GPSTracker.back_stations_with_name =MainActivity.get_back_stations("11");
                 startActivity(new Intent(ChangeRoute.this, MainActivity.class));
             }
         });
@@ -39,12 +44,14 @@ public class ChangeRoute extends AppCompatActivity {
         button_11m.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                MainActivity.show_CarId.setText("11M");
                 MainActivity.choose_route = "11M";
+                MainActivity.delete_tmp_file();
+                MainActivity.write_tmp_file("11M");
+                MainActivity.handler.sendEmptyMessage(0);
                 new_GPSTracker.go_station = new_GPSTracker.test_11m_go_station;
                 new_GPSTracker.back_station = new_GPSTracker.test_11m_back_station;
-                new_GPSTracker.go_stations_with_name = MainActivity.get_go_stations("11M");
-                new_GPSTracker.back_stations_with_name =MainActivity.get_back_stations("11M");
+//                new_GPSTracker.go_stations_with_name = MainActivity.get_go_stations("11M");
+//                new_GPSTracker.back_stations_with_name =MainActivity.get_back_stations("11M");
                 startActivity(new Intent(ChangeRoute.this, MainActivity.class));
             }
         });
@@ -52,12 +59,15 @@ public class ChangeRoute extends AppCompatActivity {
         button_11s.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                MainActivity.show_CarId.setText("11S");
+//                MainActivity.show_CarId.setText("11S");
                 MainActivity.choose_route = "11S";
+                MainActivity.delete_tmp_file();
+                MainActivity.write_tmp_file("11S");
+                MainActivity.handler.sendEmptyMessage(0);
                 new_GPSTracker.go_station = new_GPSTracker.test_11_go_station;
                 new_GPSTracker.back_station = new_GPSTracker.test_11_back_station;
-                new_GPSTracker.go_stations_with_name = MainActivity.get_go_stations("11S");
-                new_GPSTracker.back_stations_with_name =MainActivity.get_back_stations("11S");
+//                new_GPSTracker.go_stations_with_name = MainActivity.get_go_stations("11S");
+//                new_GPSTracker.back_stations_with_name =MainActivity.get_back_stations("11S");
                 startActivity(new Intent(ChangeRoute.this, MainActivity.class));
             }
         });

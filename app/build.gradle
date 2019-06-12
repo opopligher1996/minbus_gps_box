@@ -4,11 +4,11 @@ android {
     useLibrary 'org.apache.http.legacy'
     compileSdkVersion 26
     defaultConfig {
-        applicationId "com.example.cheukleong.minibus_project"
+        applicationId "com.cheukleong.minibus_project"
         minSdkVersion 21
-        targetSdkVersion 21
-        versionCode 1
-        versionName "1.0"
+        targetSdkVersion 26
+        versionCode 18
+        versionName "1"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
     }
     buildTypes {
