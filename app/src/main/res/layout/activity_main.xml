@@ -14,7 +14,6 @@
         android:layout_height="wrap_content"
         android:layout_alignEnd="@+id/route_change"
         android:layout_alignParentTop="true"
-        android:layout_marginLeft="8dp"
         android:layout_marginStart="8dp"
         android:layout_marginTop="20dp"
         android:background="@null"
@@ -27,7 +26,7 @@
         android:textAppearance="@style/TextAppearance.AppCompat"
         android:textColor="@android:color/background_dark"
         android:textColorHint="@android:color/background_dark"
-        android:textSize="80sp"
+        android:textSize="60sp"
         android:textStyle="bold"
         app:layout_constraintStart_toEndOf="@+id/textView2"
         app:layout_constraintTop_toBottomOf="@+id/station_name" />
@@ -37,12 +36,11 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_alignParentTop="true"
-        android:layout_marginLeft="32dp"
         android:layout_marginStart="32dp"
         android:layout_marginTop="20dp"
         android:layout_toStartOf="@+id/Car_ID"
         android:gravity="center"
-        android:text="車牌："
+        android:text="ID："
         android:textAlignment="textEnd"
         android:textAllCaps="false"
         android:textColor="@android:color/background_dark"
@@ -56,17 +54,17 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_alignParentTop="true"
-        android:layout_marginLeft="32dp"
         android:layout_marginStart="32dp"
         android:layout_marginTop="40dp"
         android:layout_toStartOf="@+id/Car_ID"
         android:gravity="center"
-        android:text="下一站："
+        android:text="下一站"
         android:textAlignment="textEnd"
         android:textAllCaps="false"
         android:textColor="@android:color/background_dark"
         android:textSize="60sp"
         android:textStyle="bold"
+        android:visibility="invisible"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
@@ -75,7 +73,6 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_alignParentTop="true"
-        android:layout_marginLeft="12dp"
         android:layout_marginStart="12dp"
         android:layout_marginTop="40dp"
         android:layout_toStartOf="@+id/Car_ID"
@@ -86,6 +83,7 @@
         android:textColor="@android:color/background_dark"
         android:textSize="60sp"
         android:textStyle="bold"
+        android:visibility="invisible"
         app:layout_constraintStart_toEndOf="@+id/textView"
         app:layout_constraintTop_toTopOf="parent" />
 
@@ -213,10 +211,44 @@
 
     <TextView
         android:id="@+id/textView4"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+        android:layout_width="2000px"
+        android:layout_height="1000px"
         android:background="#000000"
         android:text="TextView"
+        android:visibility="visible"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <Button
+        android:id="@+id/unlock_button"
+        android:layout_width="200px"
+        android:layout_height="100px"
+        android:layout_marginBottom="8dp"
+        android:layout_marginEnd="8dp"
+        android:text="Unlock"
+        android:visibility="invisible"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
+
+    <Button
+        android:id="@+id/button"
+        android:layout_width="59dp"
+        android:layout_height="32dp"
+        android:layout_marginStart="8dp"
+        android:text="Button"
+        android:textSize="12sp"
+        app:layout_constraintBottom_toTopOf="@+id/sound_button"
+        app:layout_constraintStart_toEndOf="@+id/station_name" />
+
+    <TextView
+        android:id="@+id/count_no"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        android:layout_marginTop="8dp"
+        android:text="null"
+        android:textColor="@android:color/white"
+        android:textSize="30sp"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 

@@ -17,9 +17,12 @@ import android.net.Network;
 import android.net.NetworkInfo;
 import android.net.TrafficStats;
 import android.nfc.Tag;
+import android.os.Build;
 import android.os.Bundle;
+import android.os.HardwarePropertiesManager;
 import android.os.IBinder;
 import android.os.StrictMode;
+import android.provider.Settings;
 import android.support.v4.app.ActivityCompat;
 import android.util.Log;
 
@@ -32,7 +35,9 @@ import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.message.BasicNameValuePair;
 import org.json.JSONObject;
 
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.io.UnsupportedEncodingException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
@@ -44,6 +49,8 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Timer;
+
+import static com.example.cheukleong.minibus_project.Configs.TAG;
 
 public class new_GPSTracker extends Service {
     public static String CAR_ID;
@@ -69,6 +76,7 @@ public class new_GPSTracker extends Service {
     public static boolean init = false;
     public static int dans = 100;
     public static int num_satellites = 0;
+    public static float hardware_temp = 0;
     public int Bat_info = 100;
     public static double go_station[][] = {
             {22.2837, 114.1588},
@@ -149,23 +157,37 @@ public class new_GPSTracker extends Service {
 
         @Override
         public void onLocationChanged(Location location) {
-            Set_Current_time();
-            Set_Current_location(location);
-            init();
 
-            if (Validate_Record(location) && init) {
-                Check_Arrive_Station();
-                Check_Quit_Station();
-                Check_Finish_Journey();
-                Check_Staion_Name();
-                Set_Sent_location(location);
-            } else if (init) {
-                Set_Sent_location(location);
-            } else {
-                Set_Sent_location(location);
+            Process process;
+            try {
+                process = Runtime.getRuntime().exec("cat sys/class/thermal/thermal_zone0/temp");
+                process.waitFor();
+                BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
+                String line = reader.readLine();
+                if(line!=null) {
+                    float temp = Float.parseFloat(line);
+                    hardware_temp = temp / 1000.0f;
+                }
+                else{
+                    hardware_temp = 0.0f;
+                }
+            }
+            catch (Exception e) {
+                    e.printStackTrace();
             }
 
-            new_GPSTracker.update_location();
+            try {
+                Set_Current_time();
+                Set_Current_location(location);
+                Log.i(TAG, "onLocationChanged:" + location.toString());
+                double distance = Sent_location.distanceTo(location);
+                if (distance > 5) {
+                    Set_Sent_location(location);
+                    new_GPSTracker.update_location();
+                }
+            }catch (Exception e){
+                Log.i("Location Onchange", e.toString());
+            }
         }
 
         @Override
@@ -180,37 +202,40 @@ public class new_GPSTracker extends Service {
 
         @Override
         public void onStatusChanged(String provider, int status, Bundle extras) {
-            Calendar cal = Calendar.getInstance();
-            Date currentLocalTime = cal.getTime();
-            DateFormat date = new SimpleDateFormat("dd-mm-yy hh:mm:ss");
-            String localTime = date.format(currentLocalTime);
+//            Calendar cal = Calendar.getInstance();
+//            Date currentLocalTime = cal.getTime();
+//            DateFormat date = new SimpleDateFormat("dd-mm-yy hh:mm:ss");
+//            String localTime = date.format(currentLocalTime);
         }
     }
 
 
     public GpsStatus.Listener GpsStatusListener = new GpsStatus.Listener() {
         public void onGpsStatusChanged(int event) {
-
-            switch (event) {
-                //第一次定位
-                case GpsStatus.GPS_EVENT_FIRST_FIX:
-                    num_satellites = 0;
-                    break;
-                //卫星状态改变
-                case GpsStatus.GPS_EVENT_SATELLITE_STATUS:
-                    if (ActivityCompat.checkSelfPermission(new_GPSTracker.this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-                        return;
-                    }
-                    GpsStatus gpsStatus = mLocationManager.getGpsStatus(null);
-                    int maxSatellites = gpsStatus.getMaxSatellites();
-                    Iterator<GpsSatellite> iters = gpsStatus.getSatellites().iterator();
-                    int count = 0;
-                    while (iters.hasNext() && count <= maxSatellites) {
-                        GpsSatellite s = iters.next();
-                        count++;
-                    }
-                    new_GPSTracker.num_satellites = count;
-                    break;
+            try {
+                switch (event) {
+                    case GpsStatus.GPS_EVENT_FIRST_FIX:
+                        num_satellites = 0;
+                        break;
+                    case GpsStatus.GPS_EVENT_SATELLITE_STATUS:
+                        if (ActivityCompat.checkSelfPermission(new_GPSTracker.this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+                            return;
+                        }
+                        GpsStatus gpsStatus = mLocationManager.getGpsStatus(null);
+                        int maxSatellites = gpsStatus.getMaxSatellites();
+                        Iterator<GpsSatellite> iters = gpsStatus.getSatellites().iterator();
+                        int count = 0;
+                        while (iters.hasNext() && count <= maxSatellites) {
+                            GpsSatellite s = iters.next();
+                            count++;
+                        }
+                        new_GPSTracker.num_satellites = count;
+                        break;
+                }
+            }
+            catch (Exception e)
+            {
+                Log.i(TAG, "onGpsStatusChanged: "+e);
             }
         };
     };
@@ -266,7 +291,7 @@ public class new_GPSTracker extends Service {
                         new_GPSTracker.Current_time = Current_time;
                         new_GPSTracker.update_location();
                         MainActivity.getConfigs();
-                    } catch (InterruptedException e) {
+                    } catch (Exception e) {
                     }
                 }
             }
@@ -305,7 +330,7 @@ public class new_GPSTracker extends Service {
 
         if (init)
             return;
-        //init=true;
+        init=true;
         Set_Compare_location(go_station[0][0], go_station[0][1]);
 
 
@@ -324,70 +349,6 @@ public class new_GPSTracker extends Service {
             Set_routeid(2);
             Set_journeyid();
             init = true;
-        }
-    }
-
-    public void Check_Arrive_Station() {
-        if (Arr_station != -1)
-            return;
-        if (Enter_Which_Station() >= 0 && Enter_Which_Station() != Pre_station) {
-            Set_Arr_station(Enter_Which_Station());
-            Station_startTime = Current_time;
-            Pre_station = Enter_Which_Station();
-        } else
-            Set_Arr_station(-1);
-    }
-
-    public void Check_Quit_Station() {
-        boolean Quitting_station;
-        if (Arr_station == -1)
-            return;
-        if (routeid.equals("1"))
-            Quitting_station = Check_Quitting(go_station);
-        else
-            Quitting_station = Check_Quitting(back_station);
-        if (Quitting_station) {
-            Station_endTime = Current_time;
-            Set_Arr_station(-1);
-        }
-    }
-
-
-    public void Check_Staion_Name() {
-        Station check_stations[];
-        if (routeid.equals("1"))
-            check_stations = go_stations_with_name;
-        else
-            check_stations = back_stations_with_name;
-
-        for (int i = 0; i < check_stations.length; i++) {
-            Station station = check_stations[i];
-            String station_name = station.staton_name;
-            double current_lat = Current_location.getLatitude();
-            double current_lng = Current_location.getLongitude();
-            double distance = station.getDistance(current_lat, current_lng);
-            if (distance < 200) {
-                MainActivity.station_name.setText(station_name);
-            }
-        }
-
-    }
-
-    private BroadcastReceiver mBatInfoReceiver = new BroadcastReceiver() {
-        @Override
-        public void onReceive(Context c, Intent info) {
-            // TODO Auto-generated method stub
-            if (Intent.ACTION_BATTERY_CHANGED.equals(info.getAction())) {
-                int level = info.getIntExtra("level", 0);
-                Bat_info = level;
-            }
-        }
-    };
-
-
-    public void Check_Finish_Journey() {
-        if ((Arr_station == go_station.length - 1 && routeid.equals("1")) || (Arr_station == back_station.length - 1 && routeid.equals("2"))) {
-            Set_New_Journey();
         }
     }
 
@@ -413,9 +374,6 @@ public class new_GPSTracker extends Service {
         return false;
     }
 
-    public boolean Validate_Record(Location location) {
-        return true;
-    }
 
     public int Enter_Which_Station() {
         double station[][];
@@ -443,46 +401,46 @@ public class new_GPSTracker extends Service {
     }
 
     public static void update_location() {
-//        if(init==false)
-//            return;
-//        if(routeid==null)
-//            return;
-//        if(CAR_ID=="" || CAR_ID==null || CAR_ID==" ")
-//            return;
-        mStartRX = TrafficStats.getTotalRxBytes();
-        mStartTX = TrafficStats.getTotalTxBytes();
-        Calendar cal = Calendar.getInstance();
-        Date currentLocalTime = cal.getTime();
-        Long Current_time = currentLocalTime.getTime();
-        new_GPSTracker.Current_time = Current_time;
-        Log.i(TAG, "Start_update_location");
-        Log.i(TAG, "CAR_ID = " + CAR_ID);
-        Log.i(TAG, "route = " + MainActivity.choose_route);
-        Log.i(TAG, "seq = " + routeid);
-        Log.i(TAG, "mStartRX: "+Long.toString(mStartRX));
-        Log.i(TAG, "mStartTX: "+Long.toString(mStartTX));
-        Map<String, Object> jsonValues = new HashMap<String, Object>();
-        jsonValues.put("lat", Sent_location.getLatitude());
-        jsonValues.put("lng", Sent_location.getLongitude());
-        float accuracy = Sent_location.getAccuracy();
-        float speed = Sent_location.getSpeed();
-        String provider = Sent_location.getProvider();
-        String GPS_PROVIDER = LocationManager.GPS_PROVIDER;
-        MainActivity.versionCode = 18;
-        Log.i(TAG, "provider: " + provider);
-        Log.i(TAG, "GPS_PROVIDER: " + GPS_PROVIDER);
-        Log.i(TAG, "speed : " + speed);
-        Log.i(TAG, "accuracy : " + accuracy);
-        Log.i(TAG, "num_satellites: "+ Integer.toString(num_satellites));
-        Log.i(TAG, "version : "+Integer.toString(MainActivity.versionCode));
-        Log.i(TAG, "first_request: "+first_request);
-        JSONObject update_location = new JSONObject(jsonValues);
-        Log.i(TAG, "update_location: "+update_location.toString());
-        DefaultHttpClient client = new DefaultHttpClient();
-        HttpPost httppost = new HttpPost("http://minibus-staging.azurewebsites.net/api/v2/record/addLocationRecord");
-        //HttpPost httppost = new HttpPost("http://minibus.azurewebsites.net/api/v2/record/addLocationRecord");
-        //HttpPost httppost = new HttpPost("http://minibus-api.socif.co/api/v2/record/addLocationRecord");
+        Log.i(TAG, "update_location: "+Sent_location.toString());
+
         try {
+            mStartRX = TrafficStats.getTotalRxBytes();
+            mStartTX = TrafficStats.getTotalTxBytes();
+            Calendar cal = Calendar.getInstance();
+            Date currentLocalTime = cal.getTime();
+            Long Current_time = currentLocalTime.getTime();
+            new_GPSTracker.Current_time = Current_time;
+            Log.i(TAG, "Start_update_location");
+            Log.i(TAG, "CAR_ID = " + CAR_ID);
+            Log.i(TAG, "route = " + MainActivity.choose_route);
+            Log.i(TAG, "seq = " + routeid);
+            Log.i(TAG, "mStartRX: "+Long.toString(mStartRX));
+            Log.i(TAG, "mStartTX: "+Long.toString(mStartTX));
+            Map<String, Object> jsonValues = new HashMap<String, Object>();
+            jsonValues.put("lat", Sent_location.getLatitude());
+            jsonValues.put("lng", Sent_location.getLongitude());
+            float accuracy = Sent_location.getAccuracy();
+            float speed = Sent_location.getSpeed();
+            String provider = Sent_location.getProvider();
+            String GPS_PROVIDER = LocationManager.GPS_PROVIDER;
+            MainActivity.versionCode = 23;
+            Log.i(TAG, "provider: " + provider);
+            Log.i(TAG, "GPS_PROVIDER: " + GPS_PROVIDER);
+            Log.i(TAG, "speed : " + speed);
+            Log.i(TAG, "accuracy : " + accuracy);
+            Log.i(TAG, "num_satellites: "+ Integer.toString(num_satellites));
+            Log.i(TAG, "version : "+Integer.toString(MainActivity.versionCode));
+            Log.i(TAG, "first_request: "+first_request);
+            JSONObject update_location = new JSONObject(jsonValues);
+            Log.i(TAG, "update_location: "+update_location.toString());
+            Log.i(TAG, "batteryLeft: "+Integer.toString(MainActivity.battery_level));
+            Log.i(TAG, "serial: "+android.os.Build.SERIAL);
+            Log.i(TAG, "car_id: "+new_GPSTracker.CAR_ID);
+            Log.i(TAG, "temp: "+Float.toString(hardware_temp));
+            DefaultHttpClient client = new DefaultHttpClient();
+            //HttpPost httppost = new HttpPost("http://minibus-staging.azurewebsites.net/api/v2/record/addLocationRecord");
+            //HttpPost httppost = new HttpPost("http://minibus.azurewebsites.net/api/v2/record/addLocationRecord");
+            HttpPost httppost = new HttpPost("http://minibus-api.socif.co/api/v2/record/addLocationRecord");
             // Add your data
             List<NameValuePair> nameValuePairs = new ArrayList<NameValuePair>();
 
@@ -496,7 +454,7 @@ public class new_GPSTracker extends Service {
             nameValuePairs.add(new BasicNameValuePair("mStartRX",Long.toString(mStartRX)));
             nameValuePairs.add(new BasicNameValuePair("mStartTX",Long.toString(mStartTX)));
             nameValuePairs.add(new BasicNameValuePair("location", update_location.toString()));
-            nameValuePairs.add(new BasicNameValuePair("license", CAR_ID));
+            nameValuePairs.add(new BasicNameValuePair("license", android.os.Build.SERIAL));
             nameValuePairs.add(new BasicNameValuePair("route", MainActivity.choose_route));
             nameValuePairs.add(new BasicNameValuePair("seq", routeid));
             nameValuePairs.add(new BasicNameValuePair("speed", Float.toString(speed)));
@@ -506,6 +464,9 @@ public class new_GPSTracker extends Service {
             nameValuePairs.add(new BasicNameValuePair("provider", provider));
             nameValuePairs.add(new BasicNameValuePair("num_satellites", Integer.toString(num_satellites)));
             nameValuePairs.add(new BasicNameValuePair("version", String.valueOf(MainActivity.versionCode)));
+            nameValuePairs.add(new BasicNameValuePair("serial", android.os.Build.SERIAL));
+            nameValuePairs.add(new BasicNameValuePair("car_id",new_GPSTracker.CAR_ID));
+            nameValuePairs.add(new BasicNameValuePair("temp",Float.toString(hardware_temp)));
             httppost.setEntity(new UrlEncodedFormEntity(nameValuePairs));
 
             try {
@@ -514,6 +475,7 @@ public class new_GPSTracker extends Service {
                     StrictMode.setThreadPolicy(policy);
                 }
                 HttpResponse response = client.execute(httppost);
+                Log.i(TAG, "response: "+response.toString());
             } catch (ClientProtocolException e) {
                 Log.d("Error:", "ClientProtocol");
             } catch (IOException e) {
@@ -546,6 +508,7 @@ public class new_GPSTracker extends Service {
     }
 
     public void Set_Sent_location(Location location) {
+
         Sent_location = location;
     }
 

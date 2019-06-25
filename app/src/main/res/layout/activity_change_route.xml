@@ -11,7 +11,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginStart="8dp"
-        android:layout_marginTop="150dp"
+        android:layout_marginTop="20dp"
         android:background="#ffffff"
         app:layout_constraintStart_toEndOf="@+id/button_11"
         app:layout_constraintTop_toTopOf="parent"
@@ -22,7 +22,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginStart="8dp"
-        android:layout_marginTop="150dp"
+        android:layout_marginTop="20dp"
         android:background="#ffffff"
         app:layout_constraintStart_toEndOf="@+id/button_11m"
         app:layout_constraintTop_toTopOf="parent"
@@ -33,20 +33,53 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginStart="40dp"
-        android:layout_marginTop="150dp"
+        android:layout_marginTop="20dp"
         android:background="#ffffff"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
         app:srcCompat="@drawable/button_11" />
 
     <ImageButton
+        android:id="@+id/button_11a"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="40dp"
+        android:layout_marginTop="10dp"
+        android:background="#ffffff"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/button_11"
+        app:srcCompat="@drawable/button_11a" />
+
+    <ImageButton
+        android:id="@+id/button_11b"
+        android:layout_width="317dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        android:layout_marginTop="8dp"
+        android:background="#ffffff"
+        app:layout_constraintStart_toEndOf="@+id/button_11a"
+        app:layout_constraintTop_toBottomOf="@+id/button_11m"
+        app:srcCompat="@drawable/button_11b" />
+
+    <ImageButton
         android:id="@+id/button_12"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        android:layout_marginTop="8dp"
+        android:background="#ffffff"
+        app:layout_constraintStart_toEndOf="@+id/button_11b"
+        app:layout_constraintTop_toBottomOf="@+id/button_11s"
+        app:srcCompat="@drawable/button_12" />
+
+    <ImageButton
+        android:id="@+id/button_12a"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginStart="40dp"
         android:layout_marginTop="8dp"
         android:background="#ffffff"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/button_11"
-        app:srcCompat="@drawable/button_11" />
+        app:layout_constraintTop_toBottomOf="@+id/button_11a"
+        app:srcCompat="@drawable/button_12a" />
 </android.support.constraint.ConstraintLayout>

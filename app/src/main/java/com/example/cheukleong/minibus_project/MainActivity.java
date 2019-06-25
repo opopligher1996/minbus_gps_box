@@ -2,7 +2,9 @@ package com.example.cheukleong.minibus_project;
 
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.app.admin.DevicePolicyManager;
 import android.content.BroadcastReceiver;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -30,13 +32,17 @@ import android.os.Message;
 import android.os.StrictMode;
 import android.provider.MediaStore;
 import android.provider.Settings;
+import android.support.v4.view.ViewPager;
 import android.util.Log;
+import android.view.GestureDetector;
 import android.view.Gravity;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.view.TextureView;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.Window;
+import android.view.WindowManager;
 import android.widget.BaseAdapter;
 import android.widget.Button;
 import android.widget.CheckBox;
@@ -91,18 +97,21 @@ import static android.provider.MediaStore.Files.FileColumns.MEDIA_TYPE_VIDEO;
 import static com.example.cheukleong.minibus_project.Configs.TAG;
 
 
-public class MainActivity extends Activity implements TextureView.SurfaceTextureListener {
+public class MainActivity extends Activity implements View.OnSystemUiVisibilityChangeListener  {
+//    public class MainActivity extends Activity implements TextureView.SurfaceTextureListener, View.OnSystemUiVisibilityChangeListener  {
     private static Context context;
     public ImageView img;
     public ImageButton sound_button;
     private  View main;
     private Button start;
     private Button button_capture;
+    private Button unlock_button;
     public static TextView show_CarId;
-    private EditText Car_ID;
+    public EditText Car_ID;
     private Spinner route_spinner;
     private ImageButton route_change;
     private TextView show_battery_level;
+    private TextView count_no;
     public static  TextView station_name;
     public static  int versionCode;
     private List<String> route_ids = new ArrayList<String>();
@@ -114,12 +123,23 @@ public class MainActivity extends Activity implements TextureView.SurfaceTexture
     private TextureView textureView;
     private SurfaceTexture surface;
     public static Handler handler;
+    public static int return_count = 10;
+    public static boolean return_key = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         String Id = Settings.Secure.getString(getContentResolver(), Settings.Secure.ANDROID_ID);
+        if(Id == null || Id.equals(""))
+        {
+            Id = android.os.Build.SERIAL;
+
+            if(Id == null || Id.equals(""))
+            {
+                Id = "no_id";
+            }
+        }
         Car_ID=findViewById(R.id.Car_ID);
         start=findViewById(R.id.startButton);
         route_spinner=findViewById(R.id.route_spinner);
@@ -131,9 +151,13 @@ public class MainActivity extends Activity implements TextureView.SurfaceTexture
         station_name = findViewById(R.id.station_name);
         capscreen_image_view = findViewById(R.id.capscreen_image_view);
         sound_button = findViewById(R.id.sound_button);
+        unlock_button = findViewById(R.id.unlock_button);
+        count_no = findViewById(R.id.count_no);
         main = findViewById(R.id.main);
         context=this;
+        hideSystemUI();
         Car_ID.setText(Id);
+        new_GPSTracker.CAR_ID = Id;
         //Car_ID.setText("7591");
         route_ids.add("線路");
         route_ids.add("8x");
@@ -144,9 +168,25 @@ public class MainActivity extends Activity implements TextureView.SurfaceTexture
         route_ids.add("油站");
         show_CarId.setText(choose_route);
 
+//        try {
+//            DevicePolicyManager myDevicePolicyManager = (DevicePolicyManager) getSystemService(Context.DEVICE_POLICY_SERVICE);
+//            ComponentName mDPM = new ComponentName(this, MainActivity.class);
+//            String[] packages = {this.getPackageName()};
+//            myDevicePolicyManager.setLockTaskPackages(mDPM, packages);
+//            startLockTask();
+//        }
+//        catch (Exception e){
+//            Log.i(TAG, "setLockTaskPackages: "+e);
+//            startLockTask();
+//        }
+
         handler=new Handler(){
             public void handleMessage(Message msg) {
-                show_CarId.setText(MainActivity.choose_route);
+                try {
+                    show_CarId.setText(MainActivity.choose_route);
+                }catch (Exception e){
+                    Log.i(TAG, "handleMessage: "+e);
+                }
             }
         };
 
@@ -158,9 +198,17 @@ public class MainActivity extends Activity implements TextureView.SurfaceTexture
                 show_CarId.setText(tmp_route);
             }
         }catch (Exception e){
-
+            Log.i(TAG, e.toString());
         }
-        this.getConfigs();
+
+
+        try {
+            this.getConfigs();
+        }catch (Exception e){
+            Log.i(TAG, e.toString());
+        }
+
+
 
         try {
             PackageInfo pInfo = getPackageManager().getPackageInfo(getPackageName(), 0);
@@ -169,7 +217,7 @@ public class MainActivity extends Activity implements TextureView.SurfaceTexture
             e.printStackTrace();
         }
 
-        final MediaPlayer station_sound_player = MediaPlayer.create(this,R.raw.station);
+//        final MediaPlayer station_sound_player = MediaPlayer.create(this,R.raw.station);
 //        textureView = (TextureView) findViewById(R.id.textureView);
 //        textureView.setSurfaceTextureListener(this);
 //        surface = textureView.getSurfaceTexture();
@@ -184,10 +232,13 @@ public class MainActivity extends Activity implements TextureView.SurfaceTexture
         start.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Log.d("Gash:","Start");
-                new_GPSTracker.CAR_ID=Car_ID.getText().toString();
-                Intent intent = new Intent(context, new_GPSTracker.class);
-                startService(intent);
+                try {
+                    Log.d("Gash:", "Start");
+                    Intent intent = new Intent(context, new_GPSTracker.class);
+                    startService(intent);
+                }catch (Exception e){
+                    Log.i(TAG, e.toString());
+                }
             }
         });
 
@@ -211,21 +262,53 @@ public class MainActivity extends Activity implements TextureView.SurfaceTexture
         route_change.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                startActivity(new Intent(MainActivity.this,ChangeRoute.class));
+                try {
+                    startActivity(new Intent(MainActivity.this, ChangeRoute.class));
+                }catch (Exception e){
+                    Log.i(TAG, "route_change = "+e);
+                }
             }
         });
 
         sound_button.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                station_sound_player.start();
+//                station_sound_player.start();
+                try {
+                    Log.i(TAG, "sound_button onClick: ");
+                    return_count--;
+                    if (return_count == 0) {
+                        showSystemUI();
+                    } else if (return_count == -10) {
+                        hideSystemUI();
+                        return_count = 10;
+                    }
+                    count_no.setText(Integer.toString(return_count));
+                    Log.i(TAG, Integer.toString(return_count));
+                }
+                catch (Exception e){
+                    e.printStackTrace();
+                }
             }
         });
 
-//        new_GPSTracker.go_stations_with_name = get_go_stations(choose_route);
-//
-//        new_GPSTracker.back_stations_with_name =get_back_stations(choose_route);
+//        unlock_button.setOnClickListener(new View.OnClickListener() {
+//            @Override
+//            public void onClick(View view) {
+//                return_count--;
+//                if(return_count==0){
+//                    return_key = true;
+//                }
+//            }
+//        });
 
+        try {
+            new_GPSTracker.go_stations_with_name = get_go_stations(choose_route);
+            new_GPSTracker.back_stations_with_name = get_back_stations(choose_route);
+        }
+        catch (Exception e){
+            Log.i(TAG, "Exception: "+e);
+        }
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.ICE_CREAM_SANDWICH_MR1) {
             if(choose_route.equals("11M")){
@@ -243,11 +326,22 @@ public class MainActivity extends Activity implements TextureView.SurfaceTexture
                 new_GPSTracker.go_station = new_GPSTracker.test_8x_go_station;
                 new_GPSTracker.back_station = new_GPSTracker.test_8x_back_station;
             }
+        }
+
+        try {
+            start.callOnClick();
+        }
+        catch (Exception e){
             start.callOnClick();
         }
 
-        this.registerReceiver(this.mBatInfoReceiver,
-                new IntentFilter(Intent.ACTION_BATTERY_CHANGED));
+        try {
+            this.registerReceiver(this.mBatInfoReceiver,
+                    new IntentFilter(Intent.ACTION_BATTERY_CHANGED));
+        }
+        catch (Exception e){
+            Log.i(TAG, "onCreate: "+e);
+        }
 
     }
 
@@ -257,9 +351,14 @@ public class MainActivity extends Activity implements TextureView.SurfaceTexture
         @Override
         public void onReceive(Context arg0, Intent intent) {
             // TODO Auto-generated method stub
-            int level = intent.getIntExtra("level", 0);
-            battery_level = level;
-            show_battery_level.setText(String.valueOf(level) + "%");
+            try {
+                int level = intent.getIntExtra("level", 0);
+                battery_level = level;
+                show_battery_level.setText(String.valueOf(level) + "%");
+            }
+            catch (Exception e){
+                Log.i(TAG, "onReceive: "+e);
+            }
         }
     };
 
@@ -275,15 +374,15 @@ public class MainActivity extends Activity implements TextureView.SurfaceTexture
     }
 
 
-    private void checkCameraHardware(Context context) {
-        if (context.getPackageManager().hasSystemFeature(PackageManager.FEATURE_CAMERA)){
-            // this device has a camera
-            Log.e(TAG, "checkCameraHardware: true");
-        } else {
-            // no camera on this device
-            Log.e(TAG, "checkCameraHardware: false");
-        }
-    }
+//    private void checkCameraHardware(Context context) {
+//        if (context.getPackageManager().hasSystemFeature(PackageManager.FEATURE_CAMERA)){
+//            // this device has a camera
+//            Log.e(TAG, "checkCameraHardware: true");
+//        } else {
+//            // no camera on this device
+//            Log.e(TAG, "checkCameraHardware: false");
+//        }
+//    }
 
 
     public static Station[] get_go_stations(String route){
@@ -378,96 +477,93 @@ public class MainActivity extends Activity implements TextureView.SurfaceTexture
         return null;
     }
 
-    public static Camera getCameraInstance(){
-        Camera c = null;
-        try {
-            c = Camera.open(); // attempt to get a Camera instance
-        }
-        catch (Exception e){
-            // Camera is not available (in use or does not exist)
-        }
-        return c; // returns null if camera is unavailable
-    }
-
-    @Override
-    public void onSurfaceTextureAvailable(SurfaceTexture surface, int width, int height) {
-        try {
-            findCamera();
-            mCamera = Camera.open(0);
-            mCamera.lock();
-            // 取得相機參數
-            Camera.Parameters parameters = mCamera.getParameters();
-
-            // 關閉閃光燈
-            parameters.setFlashMode(Camera.Parameters.FLASH_MODE_OFF);
-
-            // 設定最佳預覽尺寸
-            List<Camera.Size> listPreview = parameters.getSupportedPreviewSizes();
-            parameters.setPreviewSize(listPreview.get(0).width, listPreview.get(0).height);
-            listPreview = null;
-
-            // 設定最佳照片尺寸
-            List<Camera.Size> listPicture = parameters.getSupportedPictureSizes();
-            parameters.setPictureSize(listPicture.get(0).width, listPicture.get(0).height);
-            listPicture = null;
-
-            // 設定照片輸出為90度
-            parameters.setRotation(90);
-
-            // 設定預覽畫面為90度
-            mCamera.setDisplayOrientation(90);
-
-            // 設定相機參數
-            mCamera.setParameters(parameters);
-
-            // 設定顯示的Surface
-            mCamera.setPreviewTexture(surface);
-            // 開始顯示
-            mCamera.startPreview();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
-    }
-
-    @Override
-    public boolean onSurfaceTextureDestroyed(SurfaceTexture surface) {
-        if (mCamera != null) {
-            mCamera.stopPreview();
-            mCamera.unlock();
-            mCamera.release();
-        }
-        return true;
-    }
-
-    @Override
-    public void onSurfaceTextureSizeChanged(SurfaceTexture surface, int width, int height) {
-        // TODO Auto-generated method stub
-
-    }
-
-    @Override
-    public void onSurfaceTextureUpdated(SurfaceTexture surface) {
-
-    }
-
-
-    private int findCamera() {
-        int cameraId = -1;
-        // Search for the front facing camera
-        int numberOfCameras = Camera.getNumberOfCameras();
-        for (int i = 0; i < numberOfCameras; i++) {
-            Camera.CameraInfo info = new Camera.CameraInfo();
-            Camera.getCameraInfo(i, info);
-            if (info.facing == Camera.CameraInfo.CAMERA_FACING_BACK) {
-                Log.d(TAG, "Camera found");
-                cameraId = i;
-                break;
-            }
-        }
-        Log.i(TAG, "findCamera: "+cameraId);
-        return cameraId;
-    }
+//    public static Camera getCameraInstance(){
+//        Camera c = null;
+//        try {
+//            c = Camera.open(); // attempt to get a Camera instance
+//        }
+//        catch (Exception e){
+//            // Camera is not available (in use or does not exist)
+//        }
+//        return c; // returns null if camera is unavailable
+//    }
+//    @Override
+//    public void onSurfaceTextureAvailable(SurfaceTexture surface, int width, int height) {
+//        try {
+//            findCamera();
+//            mCamera = Camera.open(0);
+//            mCamera.lock();
+//            // 取得相機參數
+//            Camera.Parameters parameters = mCamera.getParameters();
+//
+//            // 關閉閃光燈
+//            parameters.setFlashMode(Camera.Parameters.FLASH_MODE_OFF);
+//
+//            // 設定最佳預覽尺寸
+//            List<Camera.Size> listPreview = parameters.getSupportedPreviewSizes();
+//            parameters.setPreviewSize(listPreview.get(0).width, listPreview.get(0).height);
+//            listPreview = null;
+//
+//            // 設定最佳照片尺寸
+//            List<Camera.Size> listPicture = parameters.getSupportedPictureSizes();
+//            parameters.setPictureSize(listPicture.get(0).width, listPicture.get(0).height);
+//            listPicture = null;
+//
+//            // 設定照片輸出為90度
+//            parameters.setRotation(90);
+//
+//            // 設定預覽畫面為90度
+//            mCamera.setDisplayOrientation(90);
+//
+//            // 設定相機參數
+//            mCamera.setParameters(parameters);
+//
+//            // 設定顯示的Surface
+//            mCamera.setPreviewTexture(surface);
+//            // 開始顯示
+//            mCamera.startPreview();
+//        } catch (IOException e) {
+//            e.printStackTrace();
+//        }
+//
+//    }
+//
+//    @Override
+//    public boolean onSurfaceTextureDestroyed(SurfaceTexture surface) {
+//        if (mCamera != null) {
+//            mCamera.stopPreview();
+//            mCamera.unlock();
+//            mCamera.release();
+//        }
+//        return true;
+//    }
+//
+//    @Override
+//    public void onSurfaceTextureSizeChanged(SurfaceTexture surface, int width, int height) {
+//        // TODO Auto-generated method stub
+//
+//    }
+//
+//    @Override
+//    public void onSurfaceTextureUpdated(SurfaceTexture surface) {
+//
+//    }
+//    private int findCamera() {
+//        int cameraId = -1;
+//        // Search for the front facing camera
+//        int numberOfCameras = Camera.getNumberOfCameras();
+//        for (int i = 0; i < numberOfCameras; i++) {
+//            Camera.CameraInfo info = new Camera.CameraInfo();
+//            Camera.getCameraInfo(i, info);
+//            if (info.facing == Camera.CameraInfo.CAMERA_FACING_BACK) {
+//                Log.d(TAG, "Camera found");
+//                cameraId = i;
+//                break;
+//            }
+//        }
+//        Log.i(TAG, "findCamera: "+cameraId);
+//        return cameraId;
+//    }
 
     public static void getConfigs(){
         HttpResponse response = null;
@@ -496,8 +592,7 @@ public class MainActivity extends Activity implements TextureView.SurfaceTexture
             if(set)
             {
                 Log.e(TAG, "enter set" );
-                Log.e(TAG, getResponse.getString("seq"));
-                new_GPSTracker.routeid = getResponse.getString("seq");
+//                new_GPSTracker.routeid = getResponse.getString("seq");
                 MainActivity.choose_route = getResponse.getString("route");
                 new_GPSTracker.init=false;
                 new_GPSTracker.journeyid=null;
@@ -553,9 +648,14 @@ public class MainActivity extends Activity implements TextureView.SurfaceTexture
     }
 
     public static void delete_tmp_file(){
-        File dir = context.getFilesDir();
-        File file = new File(dir, "socif_temp.txt");
-        file.delete();
+        try {
+            File dir = context.getFilesDir();
+            File file = new File(dir, "socif_temp.txt");
+            file.delete();
+        }
+        catch (Exception e){
+
+        }
     }
 
     public static String readFromFile() {
@@ -592,12 +692,85 @@ public class MainActivity extends Activity implements TextureView.SurfaceTexture
     @Override
     public boolean onKeyDown(int keyCode, KeyEvent event) {
         // Do nothing or catch the keys you want to block
-        return false;
+        Log.i(TAG, "onKeyDown: ");
+        if(return_key){
+            return super.onKeyDown(keyCode, event);
+        }
+        else{
+            return false;
+        }
+        //return super.onKeyDown(keyCode, event);
     };
+
 
     @Override
     protected void onPause() {
         super.onPause();
+        Log.i(TAG, "onPause: ");
     };
+
+    @Override
+    protected void onStop()
+    {
+        Log.i(TAG, "onStop: ");
+        Log.i(TAG, "return_count: "+Integer.toString(return_count));
+        try {
+            unregisterReceiver(mBatInfoReceiver);
+        }
+        catch (Exception e){
+            e.printStackTrace();
+        }
+//        Intent intent = new Intent(this, MainActivity.class);
+//        startActivity(intent);
+        try {
+            if (return_count != 0) {
+                Intent intent = new Intent(this, MainActivity.class);
+                startActivity(intent);
+            }
+        }
+        catch (Exception e)
+        {
+            e.printStackTrace();
+        }
+
+        super.onStop();
+    }
+
+    private void hideSystemUI() {
+        // Enables regular immersive mode.
+        // For "lean back" mode, remove SYSTEM_UI_FLAG_IMMERSIVE.
+        // Or for "sticky immersive," replace it with SYSTEM_UI_FLAG_IMMERSIVE_STICKY
+        try {
+            View decorView = getWindow().getDecorView();
+            decorView.setSystemUiVisibility(View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+                    | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
+                    | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+                    | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
+                    | View.SYSTEM_UI_FLAG_FULLSCREEN
+                    | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY);
+        }
+        catch (Exception e){
+            Log.i(TAG, "hideSystemUI: "+e);
+        }
+    };
+
+    private void showSystemUI() {
+        try {
+            View decorView = getWindow().getDecorView();
+            decorView.setSystemUiVisibility(
+                    View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+                            | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
+                            | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN);
+        }
+        catch (Exception e){
+
+        }
+    };
+
+    @Override
+    public void onSystemUiVisibilityChange(int i) {
+        Log.i(TAG, "onSystemUiVisibilityChange: ");
+    };
+
 
 }
